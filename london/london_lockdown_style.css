@@ -140,5 +140,5 @@ line.eventLine {
 
 line.selectedEvent {
     stroke: limegreen;
-    stroke-width: 3px;
+    stroke-width: 2px;
 }
