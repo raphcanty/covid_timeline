@@ -14,11 +14,16 @@ var parseTime = d3.timeParse("%Y-%m-%d"),
 // set the ranges
 var x = d3.scaleTime().range([0, width]);
 var yCases = d3.scaleLinear().range([height, 0]);
+var yDeaths = d3.scaleLinear().range([height, 0]);
 
 // define the line
 var casesLine = d3.line()
     .x( (d) => x(d.date) )
     .y( (d) => yCases(d.cases) );
+
+var deathsLine = d3.line()
+    .x( (d) => x(d.date) )
+    .y( (d) => yDeaths(d.deaths) );
 
 // append the svg object to the body of the page
 // appends a 'group' element to 'svg'
@@ -26,8 +31,8 @@ var casesLine = d3.line()
 var svg = d3.select("#sydneyTimeline").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 svg.append("text").attr("class","title").attr("x",width/2).attr("y",-10).text("Sydney COVID-19 Timeline");
 
@@ -54,6 +59,7 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
             //return {date: parseTime(d.date), cases:+d.cases, deaths:+d.deaths};
             d.date = parseTime(d.date);
             d.cases = +d.cases;
+            d.deaths = +d.deaths;
         });
         data[1].forEach(function (d) {
             d.dateFrom = parseTime(d.dateFrom);
@@ -68,16 +74,27 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
         // Scale the range of the data
         x.domain(d3.extent(data[0], (d) => d.date ));
         yCases.domain([0, d3.max(data[0], (d) => d.cases )]);
+        yDeaths.domain([0, d3.max(data[0], (d) => d.deaths )]);
 
         // Add covid lockdown level
         svg.append("g").selectAll("rect")
             .data(data[1])
             .enter().append("rect")
-                .attr("class", (d) => "level" + d.level )
-                .attr("x", (d) => x(d.dateFrom) )
-                .attr("y", height)
-                .attr("width", (d) => x(d.dateTo) - x(d.dateFrom) )
-                .attr("height", tickHeight);
+            .attr("class", (d) => "level" + d.level )
+            .attr("x", (d) => x(d.dateFrom) )
+            .attr("y", height)
+            .attr("width", (d) => x(d.dateTo) - x(d.dateFrom) )
+            .attr("height", tickHeight);
+
+        svg.append("g")
+            .selectAll("rect")
+            .data(data[0].filter( (d) => d.deaths ))
+            .enter().append("rect")
+            .attr("class", "deaths")
+            .attr("x", (d) => x(d.date)-1)
+            .attr("y", (d) => yDeaths(d.deaths))
+            .attr("width", 2)
+            .attr("height", (d) => height - yDeaths(d.deaths));
 
         // Add the lines path.
         svg.append("path")
@@ -85,6 +102,24 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
             .attr("class", "line cases")
             .attr("d", casesLine);
 
+        // Deaths with circle
+/*        svg.append("g")
+            .selectAll("circle")
+            .data(data[0].filter( (d) => d.deaths ))
+            .enter().append("circle")
+            .attr("class", "deaths")
+            .style("fill", "darkred")
+            .attr("cx", (d) => x(d.date))
+            .attr("cy", (d) => yDeaths(d.deaths))
+            .attr("r", 3);
+*/
+        // Deaths with line
+/*
+        svg.append("path")
+            .data([data[0]])
+            .attr("class", "line deaths")
+            .attr("d", deathsLine);
+*/
         // Add the x Axis
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
@@ -94,13 +129,24 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
         svg.append("g")
             .attr("class", "axis cases")
             .call(d3.axisLeft(yCases))
-                .append("text")
-                .attr("class", "label")
-                .attr("transform", "rotate(-90)")
-                .attr("y", -margin.left)
-                .attr("x", -(height / 2))
-                .attr("dy", "1em")
-                .text("New Covid cases per day");
+            .append("text")
+            .attr("class", "label")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -margin.left)
+            .attr("x", -(height / 2))
+            .attr("dy", "1em")
+            .text("New Covid cases per day");
+        svg.append("g")
+            .attr("class", "axis deaths")
+            .attr("transform", "translate("+width+",0)")
+            .call(d3.axisRight(yDeaths).ticks(d3.max(data[0], (d) => d.deaths )))
+            .append("text")
+            .attr("class", "label")
+            .attr("transform", "rotate(90)")
+            .attr("y", -margin.right)
+            .attr("x", (height / 2))
+            .attr("dy", "0.75em")
+            .text("New Covid deaths per day");
 
         // Add featured event lines
         svg.append("g").selectAll("line")
@@ -122,11 +168,11 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
         svg.append("g").attr("class","eventCircles").selectAll("circle.event")
             .data(data[2])
             .enter().append("circle")
-                .attr("class", (d) => ("event " + shortFormatDate(d.date)) )
-                .attr("cx", (d) => x(d.date) )
-                .attr("cy", height + (tickHeight/2)) //(i % 2 ? height+11 : height+23) )
-                .attr("r", (d) => d.featured ? 5 : 3 )
-                .style("fill", "black");
+            .attr("class", (d) => ("event " + shortFormatDate(d.date)) )
+            .attr("cx", (d) => x(d.date) )
+            .attr("cy", height + (tickHeight/2)) //(i % 2 ? height+11 : height+23) )
+            .attr("r", (d) => d.featured ? 5 : 3 )
+            .style("fill", "black");
         d3.select("g.eventCircles").selectAll("circle.selection")
             .data(data[2])
             .enter().append("circle")
@@ -161,10 +207,17 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
             .attr("class", "yCases")
             .attr("x1", width)
             .attr("x2", width);
+        focus.append("line")
+            .attr("class", "yDeaths")
+            .attr("x1", width)
+            .attr("x2", width+width);
 
         // append circles at the intersection
         focus.append("circle")
             .attr("class", "tooltip cases")
+            .attr("r", 4);
+        focus.append("circle")
+            .attr("class", "tooltip deaths")
             .attr("r", 4);
 
         // place the value at the intersection
@@ -175,6 +228,14 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
         focus.append("text")
             .attr("class", "tooltip front cases")
             .attr("dx", -4)
+            .attr("dy", "-.3em");
+        focus.append("text")
+            .attr("class", "tooltip back deaths")
+            .attr("dx", 4)
+            .attr("dy", "-.3em");
+        focus.append("text")
+            .attr("class", "tooltip front deaths")
+            .attr("dx", 4)
             .attr("dy", "-.3em");
 
         // place the date at the intersection
@@ -208,6 +269,10 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
                 .attr("transform",
                     "translate(" + x(d.date) + "," +
                     yCases(d.cases) + ")");
+            focus.select("circle.tooltip.deaths")
+                .attr("transform",
+                    "translate(" + x(d.date) + "," +
+                    yDeaths(d.deaths) + ")");
 
             focus.select("text.tooltip.back.cases")
                 .attr("transform",
@@ -219,6 +284,16 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
                     "translate(" + x(d.date) + "," +
                     yCases(d.cases) + ")")
                 .text(d.cases);
+            focus.select("text.tooltip.back.deaths")
+                .attr("transform",
+                    "translate(" + x(d.date) + "," +
+                    yDeaths(d.deaths) + ")")
+                .text(d.deaths);
+            focus.select("text.tooltip.front.deaths")
+                .attr("transform",
+                    "translate(" + x(d.date) + "," +
+                    yDeaths(d.deaths) + ")")
+                .text(d.deaths);
 
             focus.select("text.tooltip.back.date")
                 .attr("transform",
@@ -233,13 +308,20 @@ Promise.all([d3.csv("sydney_covid_stats.csv"), d3.csv("sydney_lockdown_level.csv
 
             focus.select(".x")
                 .attr("transform",
-                    "translate(" + x(d.date) + "," + yCases(d.cases) + ")")
-                .attr("y2", height - yCases(d.cases));
+                    "translate(" + x(d.date) + "," +
+                    Math.min(yCases(d.cases), yDeaths(d.deaths)) + ")")
+                .attr("y2", height - Math.min(yCases(d.cases), yDeaths(d.deaths)) );
 
             focus.select(".yCases")
                 .attr("transform",
                     "translate(" + width * -1 + "," +
                     yCases(d.cases) + ")")
                 .attr("x2", width + x(d.date));//width + width);
+            focus.select(".yDeaths")
+                .attr("transform",
+                    "translate(" + width * -1 + "," +
+                    yDeaths(d.deaths) + ")")
+                .attr("x1", width + x(d.date));//width + width);
         }
+
     });
