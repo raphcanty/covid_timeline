@@ -40,7 +40,7 @@ legend.selectAll("rect")
     .attr("y", (d) => (d+1)*20 )
     .attr("width", 40)
     .attr("height", 20)
-legend.append("text").attr("class","legend").attr("x",width-10).attr("y",10).text("London lockdown restrictions");
+legend.append("text").attr("class","legend").attr("x",width-10).attr("y",10).text("Sydney lockdown restrictions");
 legend.append("text").attr("class","legend").attr("x",width-55).attr("y",35).text("No restrictions");
 legend.append("text").attr("class","legend").attr("x",width-55).attr("y",135).text("Full lockdown");
 legend.append("circle").attr("cx",width-165).attr("cy",155).attr("r",3);
