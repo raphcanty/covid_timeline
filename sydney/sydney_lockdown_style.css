@@ -21,11 +21,11 @@ text.title {
 }
 
     .line.cases {
-        stroke: cornflowerblue;
+        stroke: green;
     }
 
     .line.deaths {
-        stroke: darkred;
+        stroke: darkorange;
     }
 
 /* For data axis labels */
@@ -34,11 +34,11 @@ text.title {
 }
 
     .axis.cases text {
-        fill: cornflowerblue;
+        fill: green;
     }
 
     .axis.deaths text {
-        fill: darkred;
+        fill: darkorange;
     }
 
 text.label {
@@ -49,20 +49,19 @@ text.label {
 
 /* Tooltip */
 line.yCases {
-    stroke: cornflowerblue;
+    stroke: green;
     stroke-dasharray: 3,3;
     opacity: 0.5;
 }
 
 line.yDeaths {
-    stroke: darkred;
+    stroke: darkorange;
     stroke-dasharray: 3,3;
     opacity: 0.5;
 }
 
 rect.deaths {
-    fill: darkred;
-    opacity: 0.5;
+    fill: darkorange;
 }
 
 line.x {
@@ -84,12 +83,12 @@ text.tooltip.back.deaths {
 }
 text.tooltip.front.cases {
     text-anchor: end;
-    fill: cornflowerblue;
+    fill: green;
     font: 12px Arial;
 }
 
 text.tooltip.front.deaths {
-    fill: darkred;
+    fill: orangered;
     font: 12px Arial;
 }
 
